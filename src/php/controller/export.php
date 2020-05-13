@@ -33,20 +33,17 @@ foreach (Config::get()->export_linetypes as $econfig) {
         $linetype->strip_r($line);
 
         // translate parent refs to new ids
-
         foreach ($linetype->find_incoming_links() as $incoming) {
-            $tablelink = Tablelink::load($incoming->parent_link);
-            $parentside = @$incoming->reverse ? 1 : 0;
-            $childside = ($parentside + 1) % 2;
+            $parentaliasshort = $incoming->parent_link . '_' . $incoming->parent_linetype;
 
-            if (@$line->{$incoming->parent_linetype}) {
+            if (@$line->{$parentaliasshort}) {
                 if (isset($ids[$incoming->parent_linetype])) {
-                    if (!isset($ids[$incoming->parent_linetype][$line->{$incoming->parent_linetype}])) {
-                        error_log("Not set: \$ids['" . $incoming->parent_linetype . "']['" . $line->{$incoming->parent_linetype} . "']");
+                    if (!isset($ids[$incoming->parent_linetype][$line->{$parentaliasshort}])) {
+                        error_log("Not set: \$ids['" . $incoming->parent_linetype . "']['" . $line->{$parentaliasshort} . "']");
                     }
-                    $line->{$incoming->parent_linetype} = $ids[$incoming->parent_linetype][$line->{$incoming->parent_linetype}];
+                    $line->{$parentaliasshort} = $ids[$incoming->parent_linetype][$line->{$parentaliasshort}];
                 } else {
-                    unset($line->{$incoming->parent_linetype});
+                    unset($line->{$parentaliasshort});
                 }
             }
         }

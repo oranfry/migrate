@@ -1,5 +1,5 @@
 <?php
-echo "Importing\n";
+echo "Importing\n\n";
 
 while ($f = fgets(STDIN)) {
     list($date, $time, $linetype_name, $rawdata) = explode(' ', $f, 4);
@@ -12,5 +12,6 @@ while ($f = fgets(STDIN)) {
 
     echo str_pad(' ' . count($data), 10, '.', STR_PAD_LEFT) . "\n";
 }
+echo "\n";
 
 return [];
