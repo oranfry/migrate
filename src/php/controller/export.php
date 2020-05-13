@@ -1,6 +1,7 @@
 <?php
 $ids = [];
 $output = "";
+$timestamp = date('Y-m-d H:i:s');
 
 foreach (Config::get()->export_linetypes as $econfig) {
     if (!preg_match('/^([a-z]+)(\*?)/', $econfig, $groups)) {
@@ -52,10 +53,8 @@ foreach (Config::get()->export_linetypes as $econfig) {
     }
 
     if (count($lines)) {
-        $output .= $export_linetype . ' ' . json_encode($lines) . "\n";
+        echo $timestamp . ' ' . $export_linetype . ' ' . json_encode($lines) . "\n";
     }
 }
 
-return [
-    'data' => $output,
-];
+return [];
