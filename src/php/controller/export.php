@@ -15,7 +15,7 @@ foreach (Config::get()->export_linetypes as $econfig) {
     $ids[$export_linetype] = [];
 
     $linetype = Linetype::load($export_linetype);
-    $lines = $linetype->find_lines(AUTH_TOKEN, null, null, null, false, $include_children, true);
+    $lines = $linetype->find_lines(TOKEN, null, null, null, false, $include_children, true);
 
     foreach ($lines as $line) {
         // remove inline children
