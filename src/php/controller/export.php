@@ -3,6 +3,8 @@ $ids = [];
 $output = "";
 $timestamp = date('Y-m-d H:i:s');
 
+$token = Blends::login(USRENAME, PASSWORD);
+
 foreach (Config::get()->export_linetypes as $econfig) {
     if (!preg_match('/^([a-z]+)(\*?)/', $econfig, $groups)) {
         error_response("Invalid export linetype export config {$econfig}");
@@ -15,7 +17,7 @@ foreach (Config::get()->export_linetypes as $econfig) {
     $ids[$export_linetype] = [];
 
     $linetype = Linetype::load($export_linetype);
-    $lines = $linetype->find_lines(TOKEN, null, null, null, false, $include_children, true);
+    $lines = $linetype->find_lines($token, null, null, null, false, $include_children, true);
 
     foreach ($lines as $line) {
         // remove inline children
@@ -53,5 +55,8 @@ foreach (Config::get()->export_linetypes as $econfig) {
         echo $timestamp . ' ' . $export_linetype . ' ' . json_encode($lines) . "\n";
     }
 }
+
+$token = Blends::logout($token);
+
 
 return [];
