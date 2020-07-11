@@ -10,9 +10,23 @@ while ($f = fgets(STDIN)) {
 
     $print = "{$date} {$time} {$linetype_name} ";
     echo str_pad($print, 49, '.');
-    $data = $linetype->save($token, json_decode($rawdata), 0, $timestamp);
 
-    echo str_pad(' ' . count($data), 10, '.', STR_PAD_LEFT) . "\n";
+    $verb = null;
+    $verbs = [];
+
+    $data = json_decode($rawdata);
+
+    foreach ($data as $line) {
+        $verbs[] = @$line->_is === false ? '-' : (@$line->id ? '~' : '+');
+    }
+
+    if (count(array_unique($verbs)) == 1) {
+        $verb = reset($verbs);
+    }
+
+    $data = $linetype->save($token, $data, 0, $timestamp);
+
+    echo str_pad(' ' . '(' . count($data) . ')', 12, '.', STR_PAD_LEFT) . ' ' . ($verb ?? '') . ' ' . implode(', ', array_map(function($v, $i) use($verb, $verbs) { return ($verb ? '' : $verbs[$i]) . $v->id; }, $data, array_keys($data))) . "\n";
 }
 echo "\n";
 
