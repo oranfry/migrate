@@ -1,7 +1,7 @@
 <?php
 echo "Importing\n\n";
 
-$token = Blends::login(USERNAME, PASSWORD);
+$token = Blends::login(USERNAME, PASSWORD, true);
 
 while ($f = fgets(STDIN)) {
     list($date, $time, $linetype_name, $rawdata) = explode(' ', $f, 4);

@@ -3,7 +3,7 @@ $ids = [];
 $output = "";
 $timestamp = date('Y-m-d H:i:s');
 
-$token = Blends::login(USRENAME, PASSWORD);
+$token = Blends::login(USERNAME, PASSWORD, true);
 
 foreach (Config::get()->export_linetypes as $econfig) {
     if (!preg_match('/^([a-z]+)(\*?)/', $econfig, $groups)) {
