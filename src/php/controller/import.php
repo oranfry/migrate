@@ -30,6 +30,4 @@ while ($f = fgets(STDIN)) {
 }
 echo "\n";
 
-$token = Blends::logout($token);
-
 return [];

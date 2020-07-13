@@ -56,7 +56,4 @@ foreach (Config::get()->export_linetypes as $econfig) {
     }
 }
 
-$token = Blends::logout($token);
-
-
 return [];
