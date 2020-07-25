@@ -3,6 +3,7 @@ namespace migrate;
 
 class Router extends \Router {
     protected static $routes = [
-        'CLI export|import|import_translate_ids|collisions \S+ \S+' => ['PAGE', 'USERNAME', 'PASSWORD'],
+        'CLI collisions' => ['PAGE'],
+        'CLI export|import|import_translate_ids \S+ \S+' => ['PAGE', 'USERNAME', 'PASSWORD'],
     ];
 }
