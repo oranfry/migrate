@@ -10,15 +10,15 @@ if (!$sequence) {
 
 $lookup = [];
 $collisions = [];
-$from = $sequence->max ?? 1;
-$process = 1000000; // max mysql int 2147483647
 
 foreach (array_keys(Config::get()->tables) as $table) {
     $lookup[$table] = [];
 }
 
-for ($i = $from; $i < $from + $process; $i++) {
-    foreach (array_keys(Config::get()->tables) as $table) {
+foreach (array_keys(Config::get()->tables) as $table) {
+    echo str_pad("Processing {$table}...", 40, '.');
+
+    for ($i = 1; $i < MAX; $i++) {
         $id = n2h($table, $i);
 
         if (isset($lookup[$table][$id])) {
@@ -35,10 +35,10 @@ for ($i = $from; $i < $from + $process; $i++) {
 
         $lookup[$table][$id] = $i;
     }
+
+    echo "done\n";
 }
 
 return [
-    'max' => $i,
-    'did' => $process,
     'collisions' => $collisions,
 ];

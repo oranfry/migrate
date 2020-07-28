@@ -1,4 +1,3 @@
-Processed: <?= $did ?>.
-New max:   <?= $max ?>.
+New max:   <?= MAX ?>.
 <?php var_export($collisions); ?>
 
