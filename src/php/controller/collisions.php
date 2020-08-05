@@ -10,12 +10,13 @@ if (!$sequence) {
 
 $lookup = [];
 $collisions = [];
+$tables = TABLE ? [TABLE] : array_keys(Config::get()->tables);
 
-foreach (array_keys(Config::get()->tables) as $table) {
+foreach ($tables as $table) {
     $lookup[$table] = [];
 }
 
-foreach (array_keys(Config::get()->tables) as $table) {
+foreach ($tables as $table) {
     echo str_pad("Processing {$table}...", 40, '.');
 
     for ($i = 1; $i < MAX; $i++) {
