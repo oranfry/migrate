@@ -26,6 +26,11 @@ while ($f = fgets(STDIN)) {
 
     $data = $linetype->save($token, $data, 0, $timestamp);
 
+    if ($data === false) {
+        error_log("Error importing a {$linetype->name}\n");
+        die();
+    }
+
     echo str_pad(' ' . '(' . count($data) . ')', 12, '.', STR_PAD_LEFT) . ' ' . ($verb ?? '') . ' ' . implode(', ', array_map(function($v, $i) use($verb, $verbs) { return ($verb ? '' : $verbs[$i]) . $v->id; }, $data, array_keys($data))) . "\n";
 }
 echo "\n";
