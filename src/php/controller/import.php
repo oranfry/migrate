@@ -24,7 +24,7 @@ while ($f = fgets(STDIN)) {
         $verb = reset($verbs);
     }
 
-    $data = $linetype->save($token, $data, 0, $timestamp);
+    $data = $linetype->save($token, $data, $timestamp);
 
     if ($data === false) {
         error_log("Error importing a {$linetype->name}\n");

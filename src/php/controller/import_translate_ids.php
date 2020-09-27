@@ -29,7 +29,7 @@ while ($f = fgets(STDIN)) {
         translate_r($linetype, $datum);
     }
 
-    $data = $linetype->save($token, $data, 0, $timestamp);
+    $data = $linetype->save($token, $data, $timestamp);
 
     echo str_pad(' ' . '(' . count($data) . ')', 12, '.', STR_PAD_LEFT) . ' ' . ($verb ?? '') . ' ' . implode(', ', array_map(function($v, $i) use($verb, $verbs) { return ($verb ? '' : $verbs[$i]) . $v->id; }, $data, array_keys($data))) . "\n";
 }
