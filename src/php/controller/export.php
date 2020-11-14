@@ -16,7 +16,7 @@ foreach (Config::get()->export_linetypes as $econfig) {
     $id = 1;
     $ids[$export_linetype] = [];
 
-    $linetype = Linetype::load($export_linetype);
+    $linetype = Linetype::load($token, $export_linetype);
     $lines = $linetype->find_lines($token, null, null, null, false, $include_children, true);
 
     foreach ($lines as $line) {

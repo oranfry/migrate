@@ -6,7 +6,7 @@ $token = Blends::login(USERNAME, PASSWORD, true);
 
 while ($f = fgets(STDIN)) {
     list($date, $time, $linetype_name, $rawdata) = explode(' ', $f, 4);
-    $linetype = Linetype::load($linetype_name);
+    $linetype = Linetype::load($token, $linetype_name);
     $timestamp = "{$date} {$time}";
 
     $print = "{$date} {$time} {$linetype_name} ";
@@ -26,7 +26,7 @@ while ($f = fgets(STDIN)) {
     }
 
     foreach ($data as $datum) {
-        translate_r($linetype, $datum);
+        translate_r($token, $linetype, $datum);
     }
 
     $data = $linetype->save($token, $data, $timestamp);
@@ -38,7 +38,7 @@ echo "\n";
 return [];
 
 
-function translate_r($linetype, $line)
+function translate_r($token, $linetype, $line)
 {
     global $issued;
 
@@ -50,7 +50,7 @@ function translate_r($linetype, $line)
         $parentaliasshort = $parent->parent_link . '_' . $parent->parent_linetype;
 
         if (@$line->{$parentaliasshort}) {
-            $parentlinetype = Linetype::load($parent->parent_linetype);
+            $parentlinetype = Linetype::load($token, $parent->parent_linetype);
             $line->{$parentaliasshort} = n2h($parentlinetype->table, $line->{$parentaliasshort});
         }
     }
@@ -61,7 +61,7 @@ function translate_r($linetype, $line)
         }
 
         foreach ($line->{$child->label} as $childline) {
-            translate_r(Linetype::load($child->linetype), $childline);
+            translate_r($token, Linetype::load($token, $child->linetype), $childline);
         }
     }
 }

@@ -5,7 +5,7 @@ $token = Blends::login(USERNAME, PASSWORD, true);
 
 while ($f = fgets(STDIN)) {
     list($date, $time, $linetype_name, $rawdata) = explode(' ', $f, 4);
-    $linetype = Linetype::load($linetype_name);
+    $linetype = Linetype::load($token, $linetype_name);
     $timestamp = "{$date} {$time}";
 
     $print = "{$date} {$time} {$linetype_name} ";
