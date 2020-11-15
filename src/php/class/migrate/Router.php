@@ -7,6 +7,6 @@ class Router extends \Router {
         'CLI collisions \S+ \S+' => ['PAGE', 'MAX', 'TABLE'],
         'CLI n2h \S+ \S+' => ['PAGE', 'TABLE', 'N'],
         'CLI h2n \S+ \S+' => ['PAGE', 'TABLE', 'H'],
-        'CLI export|import|import_translate_ids \S+ \S+' => ['PAGE', 'USERNAME', 'PASSWORD'],
+        'CLI export|import|expunge-tokens \S+ \S+' => ['PAGE', 'USERNAME', 'PASSWORD'],
     ];
 }
