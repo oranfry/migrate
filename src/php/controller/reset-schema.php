@@ -1,5 +1,12 @@
 <?php
 $token = Blends::login(USERNAME, PASSWORD, true);
+
+Db::succeed("drop table if exists `sequence_pointer`");
+Db::succeed("create table `sequence_pointer` (`table` varchar(255) not null, `pointer` int default '1', primary key (`table`)) engine=innodb default charset=latin1");
+
+Db::succeed("drop table if exists `master_record_lock`");
+Db::succeed("create table `master_record_lock` (`counter` int default null) engine=innodb default charset=latin1");
+
 $schemata = [];
 $defs = [
     'text' => "varchar(255) null",
@@ -17,10 +24,33 @@ $examples = [
     'timestamp' => "'2020-01-01 01:02:03'",
 ];
 
-foreach (array_values(array_unique(array_merge(['user', 'token'], BlendsConfig::get()->export_linetypes))) as $linetypeName) {
+$linetypes = [];
+$tablelinks = [];
+
+foreach (array_values(array_unique(array_merge(['user', 'token'], BlendsConfig::get($token)->export_linetypes))) as $export) {
+    $includeChildren = preg_match('/(.*)' . preg_quote('*') . '$/', $export, $groups);
+
+    if ($includeChildren) {
+        $linetypeName = $groups[1];
+    } else {
+        $linetypeName = $export;
+    }
+
+    $linetypes[] = $linetypeName;
+
+    if ($includeChildren) {
+        $linetype = Linetype::load($token, $linetypeName);
+
+        foreach ($linetype->children as $child) {
+            $linetypes[] = $child->linetype;
+        }
+    }
+}
+
+foreach ($linetypes as $linetypeName) {
     $linetype = Linetype::load($token, $linetypeName);
     $table = $linetype->table;
-    $db_table = BlendsConfig::get()->tables[$table];
+    $db_table = BlendsConfig::get($token)->tables[$table];
 
     if (!isset($schemata[$db_table])) {
         $schemata[$db_table] = [
@@ -87,6 +117,14 @@ foreach (array_values(array_unique(array_merge(['user', 'token'], BlendsConfig::
 
         $schemata[$db_table][$field_full] = (object) ['def' => $def];
     }
+
+    foreach (@$linetype->children as $child) {
+        $tablelinks[$child->parent_link] = true;
+    }
+
+    foreach (@$linetype->inlinelinks ?: [] as $child) {
+        $tablelinks[$child->tablelink] = true;
+    }
 }
 
 foreach ($schemata as $table => $schemata[$db_table]) {
@@ -98,17 +136,35 @@ foreach ($schemata as $table => $schemata[$db_table]) {
 
     $tabledef .= ",\n  primary key (`id`)\n) engine=InnoDB default charset=latin1;";
 
-    $result = Db::succeed("drop table if exists `{$table}`");
-    $result = Db::succeed($tabledef);
-
-    // $row = $result->fetch(PDO::FETCH_ASSOC);
-    // echo "\n";
-    // echo $row["Create Table"] . "\n";
-    // echo "\n\n\n\n--------------------\n\n\n\n";
+    Db::succeed("drop table if exists `{$table}`");
+    Db::succeed($tabledef);
 }
 
-Db::succeed("drop table if exists `sequence_pointer`");
-Db::succeed("create table `sequence_pointer` (`table` varchar(255) not null, `pointer` int default '1', primary key (`table`)) engine=innodb default charset=latin1");
+foreach (array_keys($tablelinks) as $tablelinkName) {
+    $tablelink = Tablelink::load($tablelinkName);
+    $dbtables = [
+        BlendsConfig::get($token)->tables[$tablelink->tables[0]],
+        BlendsConfig::get($token)->tables[$tablelink->tables[1]],
+    ];
+
+    $unique = implode(",\n        ", array_filter([
+        in_array($tablelink->type, ['oneone', 'manyone']) ? "UNIQUE KEY `{$tablelink->ids[0]}_id` (`{$tablelink->ids[0]}_id`)" : '',
+        in_array($tablelink->type, ['oneone', 'onemany']) ? "UNIQUE KEY `{$tablelink->ids[1]}_id` (`{$tablelink->ids[1]}_id`)" : '',
+    ]));
+
+    $unique .= ($unique ? ',' : '');
+
+    Db::succeed("drop table if exists `{$tablelink->middle_table}`");
+    Db::succeed("CREATE TABLE `{$tablelink->middle_table}` (
+        `{$tablelink->ids[0]}_id` char(10) NOT NULL,
+        `{$tablelink->ids[1]}_id` char(10) NOT NULL,
+        {$unique}
+        KEY `fk_{$tablelinkName}_1` (`{$tablelink->ids[0]}_id`),
+        KEY `fk_{$tablelinkName}_2` (`{$tablelink->ids[1]}_id`),
+        CONSTRAINT `fk_{$tablelinkName}_1` FOREIGN KEY (`{$tablelink->ids[0]}_id`) REFERENCES `{$dbtables[0]}` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+        CONSTRAINT `fk_{$tablelinkName}_2` FOREIGN KEY (`{$tablelink->ids[1]}_id`) REFERENCES `{$dbtables[1]}` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+}
 
 return [
     'schemata' => $schemata,
