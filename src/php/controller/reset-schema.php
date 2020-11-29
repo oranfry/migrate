@@ -17,7 +17,7 @@ $examples = [
     'timestamp' => "'2020-01-01 01:02:03'",
 ];
 
-foreach (BlendsConfig::get()->linetypes as $linetypeName => $linetype_config) {
+foreach (array_values(array_unique(array_merge(['user', 'token'], BlendsConfig::get()->export_linetypes))) as $linetypeName) {
     $linetype = Linetype::load($token, $linetypeName);
     $table = $linetype->table;
     $db_table = BlendsConfig::get()->tables[$table];
