@@ -4,8 +4,11 @@ function build_table_definitions($token)
 {
     $schemata = [];
     $definitions = [
-        'sequence_pointer' => "create table `sequence_pointer` (`table` varchar(255) not null, `pointer` int default '1', primary key (`table`)) engine=innodb default charset=latin1",
-        'master_record_lock' => "create table `master_record_lock` (`counter` int default null) engine=innodb default charset=latin1",
+        'record' => [
+            'sequence_pointer' => "create table `sequence_pointer` (`table` varchar(255) not null, `pointer` int default '1', primary key (`table`)) engine=innodb default charset=latin1",
+            'master_record_lock' => "create table `master_record_lock` (`counter` int default null) engine=innodb default charset=latin1",
+        ],
+        'tablelink' => [],
     ];
 
     $defs = [
@@ -108,30 +111,29 @@ function build_table_definitions($token)
     }
 
     foreach ($schemata as $table => $fields) {
-        $definitions[$table] = "create table `{$table}` (" . implode(", ", array_map(function($def, $fieldName){
+        $definitions['record'][$table] = "create table `{$table}` (" . implode(", ", array_map(function($def, $fieldName){
             return "`{$fieldName}` {$def->def}";
         }, $fields, array_keys($fields))) . ", primary key (`id`)) engine=InnoDB default charset=latin1";
     }
 
-    foreach (array_keys($tablelinks) as $tablelinkName) {
-        $tablelink = Tablelink::load($tablelinkName);
+    foreach (array_keys($tablelinks) as $tablelinkname) {
+        $tablelink = Tablelink::load($tablelinkname);
         $dbtables = [
             BlendsConfig::get($token)->tables[$tablelink->tables[0]],
             BlendsConfig::get($token)->tables[$tablelink->tables[1]],
         ];
 
-        $unique = implode(",\n        ", array_filter([
+        $unique = implode(", ", array_filter([
             in_array($tablelink->type, ['oneone', 'manyone']) ? "UNIQUE KEY `{$tablelink->ids[0]}_id` (`{$tablelink->ids[0]}_id`)" : '',
             in_array($tablelink->type, ['oneone', 'onemany']) ? "UNIQUE KEY `{$tablelink->ids[1]}_id` (`{$tablelink->ids[1]}_id`)" : '',
         ]));
 
-        $unique .= ($unique ? ',' : '');
+        $unique .= ($unique ? ", " : '');
 
-        $definitions[$tablelink->middle_table] = preg_replace('/\s+/', ' ', "create table `{$tablelink->middle_table}` (
+        $definitions['tablelink'][$tablelink->middle_table] = preg_replace('/\s+/', ' ', "create table `{$tablelink->middle_table}` (
                 `{$tablelink->ids[0]}_id` char(10) not null,
                 `{$tablelink->ids[1]}_id` char(10) not null,
-                {$unique}
-                key `fk_{$tablelinkname}_1` (`{$tablelink->ids[0]}_id`),
+                {$unique} key `fk_{$tablelinkname}_1` (`{$tablelink->ids[0]}_id`),
                 key `fk_{$tablelinkname}_2` (`{$tablelink->ids[1]}_id`),
                 constraint `fk_{$tablelinkname}_1` foreign key (`{$tablelink->ids[0]}_id`) references `{$dbtables[0]}` (`id`) on delete cascade on update restrict,
                 constraint `fk_{$tablelinkname}_2` foreign key (`{$tablelink->ids[1]}_id`) references `{$dbtables[1]}` (`id`) on delete cascade on update restrict
