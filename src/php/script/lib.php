@@ -43,62 +43,18 @@ function build_table_definitions($token)
             ];
         }
 
-        $table_expression = 'select ' . implode(', ', array_map(function($uf){
-            $field_full = str_replace('{t}.', '', $uf);
-            return "null {$field_full}";
-        }, array_keys($linetype->unfuse_fields)));
-
-        foreach ($linetype->fields as $field) {
-            $key = $field->type . (@$field->dp ? 'dp' : '');
-
-            if (
-                !preg_match('/^{t}\.([a-z]+)$/', @$field->fuse, $groups)
-                ||
-                isset($schemata[$db_table][$groups[1]])
-                ||
-                !isset($defs[$key])
-            ) {
-                continue;
+        foreach ($linetype->unfuse_fields as $field => $details) {
+            if (!is_object($details) || !property_exists($details, 'type')) {
+                error_response("Unfuse field {$linetype->name}.{$field} not in the right format");
             }
 
-            $schemata[$db_table][$groups[1]] = (object) ['def' => $defs[$key]];
-        }
+           $field_full = str_replace('{t}.', '', $field);
 
-        foreach ($linetype->unfuse_fields as $field => $expression) {
-            $field_full = str_replace('{t}.', '', $field);
-
-            if (isset($schemata[$db_table][$field_full])) {
-                continue;
+            if (isset($schemata[$db_table][$field_full]) && $schemata[$db_table][$field_full]->def != $details->type) {
+                error_response('Inconsistent types for field ' . $db_table . '.' . $field . ': ' . $schemata[$db_table][$field_full]->def . ' vs.' . $details->type);
             }
 
-            $expression_full = str_replace('{t}', 't', $expression);
-            preg_match_all('/:([a-z_]+)/', $expression_full, $matches);
-
-            for ($i = 0; $i < count($matches[1]); $i++) {
-                $var = preg_replace('/^t_/', '', $matches[1][$i]);
-                foreach ($linetype->fields as $field) {
-                    if ($field->name == $var) {
-                        $expression_full = str_replace(':' . $matches[1][$i], $examples[$field->type], $expression_full);
-
-                        break;
-                    }
-                }
-            }
-
-            $result = Db::succeed("select {$expression_full} field from ({$table_expression}) t");
-            $value = $result->fetch(PDO::FETCH_ASSOC)['field'];
-
-            $def = 'varchar(255) null';
-
-            if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', $value)) {
-                $def = 'timestamp null';
-            } elseif (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $value)) {
-                $def = 'date null';
-            } elseif (is_numeric($value)) {
-                $def = 'decimal(32, 16) null';
-            }
-
-            $schemata[$db_table][$field_full] = (object) ['def' => $def];
+            $schemata[$db_table][$field_full] = (object) ['def' => $details->type];
         }
 
         foreach (@$linetype->children as $child) {
