@@ -1,4 +1,7 @@
 <?php
+
+@include APP_HOME . "/import_translate.php";
+
 echo "Importing\n\n";
 
 $token = Blends::login(USERNAME, PASSWORD, true);
@@ -24,11 +27,19 @@ while ($f = fgets(STDIN)) {
         $verb = reset($verbs);
     }
 
+    if (function_exists('import_presave')) {
+        import_presave($linetype_name, $data);
+    }
+
     $data = $linetype->save($token, $data, $timestamp);
 
     if ($data === false) {
         error_log("Error importing a {$linetype->name}\n");
         die();
+    }
+
+    if (function_exists('import_postsave')) {
+        import_postsave($linetype_name, $data);
     }
 
     echo str_pad(' ' . '(' . count($data) . ')', 12, '.', STR_PAD_LEFT) . ' ' . ($verb ?? '') . ' ' . implode(', ', array_map(function($v, $i) use($verb, $verbs) { return ($verb ? '' : $verbs[$i]) . $v->id; }, $data, array_keys($data))) . "\n";
